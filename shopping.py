@@ -1,8 +1,9 @@
 import csv
 import sys
+from typing import Any
 
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.model_selection import train_test_split
+# from sklearn.neighbors import KNeighborsClassifier
 
 TEST_SIZE = 0.4
 
@@ -30,8 +31,17 @@ def main():
     print(f"True Positive Rate: {100 * sensitivity:.2f}%")
     print(f"True Negative Rate: {100 * specificity:.2f}%")
 
+Evidence = list[list[Any]]
+Labels = list[int]
 
-def load_data(filename):
+def month_index_from_string(month: str) -> int:
+    months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'June',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ]
+    return months.index(month)
+
+def load_data(filename) -> tuple[Evidence, Labels]:
     """
     Load shopping data from a CSV file `filename` and convert into a list of
     evidence lists and a list of labels. Return a tuple (evidence, labels).
@@ -59,7 +69,37 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    evidence: list[list[Any]] = []
+    labels: list[int] = []
+
+    with open(filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            row_evidence = [
+                int(row['Administrative']),
+                float(row['Administrative_Duration']),
+                int(row['Informational']),
+                float(row['Informational_Duration']),
+                int(row['ProductRelated']),
+                float(row['ProductRelated_Duration']),
+                float(row['BounceRates']),
+                float(row['ExitRates']),
+                float(row['PageValues']),
+                float(row['SpecialDay']),
+                month_index_from_string(row['Month']),
+                int(row['OperatingSystems']),
+                int(row['Browser']),
+                int(row['Region']),
+                int(row['TrafficType']),
+                1 if row['VisitorType'] == 'Returning_Visitor' else 0,
+                1 if row['Weekend'] == 'TRUE' else 0
+            ]
+            row_label = 1 if row['Revenue'] == 'TRUE' else 0
+
+            evidence.append(row_evidence)
+            labels.append(row_label)
+
+    return (evidence, labels)
 
 
 def train_model(evidence, labels):
